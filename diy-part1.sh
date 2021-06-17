@@ -12,7 +12,7 @@
 
 # Uncomment a feed source
 # sed -i 's/^#\(.*helloworld\)/\1/' feeds.conf.default
-sed '$asrc-git helloworld https://gitclone.com/github.com/fw876/helloworld' feeds.conf.default
+sed '$asrc-git helloworld https://github.com/fw876/helloworld' feeds.conf.default
 
 # Add a feed source
 #sed -i '$a src-git OpenClash https://github.com/vernesong/OpenClash' feeds.conf.default
