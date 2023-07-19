@@ -71,11 +71,11 @@ jobs:
         ln -sf /workdir/openwrt $GITHUB_WORKSPACE/openwrt
 
     - name: Cache
-      uses: klever1988/cachewrtbuild@main
+      uses: actions/cache@v1.2.1
       with:
-        ccache: true
-        toolchain: true
-        prefix: ${{ github.workspace }}/openwrt
+        path: ${{ github.workspace }}/openwrt
+        key: openwrt-test
+        restore-keys: openwrt-test
 
     - name: 加载自定义插件库
       run: |
