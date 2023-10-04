@@ -167,7 +167,7 @@ jobs:
       id: tag
       if: steps.organize.outputs.status == 'success' && !cancelled()
       run: |
-        echo "release_tag=${{ env.FILE_TIME }}" >> $GITHUB_OUTPUT
+        echo "::set-output name=release_tag::$(date +"%Y.%m.%d-%H%M")"
         touch release.txt
         echo "[固件源码](https://github.com/coolsnowwolf/lede)" >> release.txt
         [ $UPLOAD_COWTRANSFER = true ] && echo "🔗 [Cowtransfer网盘](${{ steps.cowtransfer.outputs.url }})" >> release.txt
