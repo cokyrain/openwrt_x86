@@ -16,7 +16,8 @@ permissions:
   contents: write
 
 env:
-  REPO_URL: https://github.com/coolsnowwolf/lede
+  GITHUB_URL: https://github.com/
+  REPO_URL: coolsnowwolf/lede
   REPO_BRANCH: master
   FEEDS_CONF: feeds.conf.default
   CONFIG_FILE: .config
@@ -30,10 +31,30 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+    - name: 检查库更新情况
+      id: checknew
+      run: |
+        curl https://api.github.com/repos/$REPO_URL/commits > index.json
+        commits_time=$(cat index.json | grep "date" | sed -n "2p" | sed 's/        \"date\": \"//g' | sed 's/\"//g' | sed 's/T/ /g' | sed 's/Z//g')
+        commits_time8=$(date +"%Y-%m-%d %H:%M:%S" -d "@$(($(date +%s -d "$commits_time")+28800))")
+        echo $(date +"%Y-%m-%d %H:%M:%S")  $(date +%s)
+        echo $commits_time  $(date +%s -d "$commits_time")
+        echo $(($(date +%s) - $(date +%s -d "$commits_time")))
+        if [ $(($(date +%s) - $(date +%s -d "$commits_time"))) -le 14400 ]
+          then
+            echo "CODE_TIME=$commits_time" >> $GITHUB_ENV
+            echo "CODE_TIME8=$commits_time8" >> $GITHUB_ENV
+            echo "status=success" >> $GITHUB_OUTPUT
+        else
+            echo "No Update"
+        fi
+
     - name: 检查项目分支
+      if: steps.checknew.outputs.status == 'success' && !cancelled()
       uses: actions/checkout@main
 
     - name: 安装编译环境
+      if: steps.checknew.outputs.status == 'success' && !cancelled()
       env:
         DEBIAN_FRONTEND: noninteractive
       run: |
@@ -53,10 +74,11 @@ jobs:
 
     - name: 下载固件源码
       id: download
+      if: steps.checknew.outputs.status == 'success' && !cancelled()
       working-directory: /workdir
       run: |
         df -hT $PWD
-        git clone $REPO_URL -b $REPO_BRANCH openwrt
+        git clone $GITHUB_URL/$REPO_URL -b $REPO_BRANCH openwrt
         ln -sf /workdir/openwrt $GITHUB_WORKSPACE/openwrt
         echo "status=success" >> $GITHUB_OUTPUT
 
@@ -190,7 +212,7 @@ jobs:
       with:
         delete_releases: true
         delete_tags: true
-        releases_keep_latest: 30
+        releases_keep_latest: 300
         delete_workflows: true
-        workflows_keep_day: 30
+        workflows_keep_day: 365
         gh_token: ${{ secrets.GH_TOKEN }}
