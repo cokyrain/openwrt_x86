@@ -10,38 +10,60 @@ on:
         required: false
         default: 'false'
   schedule:
-    - cron: 30 8 */2 * *
+    - cron: 30 8 * * *
+
+permissions:
+  contents: write
 
 env:
-  REPO_URL: https://github.com/coolsnowwolf/lede
+  GITHUB_URL: https://github.com/
+  REPO_URL: coolsnowwolf/lede
   REPO_BRANCH: master
   FEEDS_CONF: feeds.conf.default
   CONFIG_FILE: test.config
   DIY_P1_SH: diy-test1.sh
   DIY_P2_SH: diy-part2.sh
-  UPLOAD_BIN_DIR: false
-  UPLOAD_FIRMWARE: true
   UPLOAD_COWTRANSFER: false
   UPLOAD_WETRANSFER: false
-  UPLOAD_RELEASE: true
-  TZ: Asia/Shanghai
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
+    - name: 检查库更新情况
+      id: checknew
+      run: |
+        curl https://api.github.com/repos/$REPO_URL/commits > index.json
+        curl https://api.github.com/repos/fw876/helloworld/commits > index2.json
+        commits_time=$(cat index.json | grep "date" | sed -n "2p" | sed 's/        \"date\": \"//g' | sed 's/\"//g' | sed 's/T/ /g' | sed 's/Z//g')
+        commits_time2=$(cat index2.json | grep "date" | sed -n "2p" | sed 's/        \"date\": \"//g' | sed 's/\"//g' | sed 's/T/ /g' | sed 's/Z//g')
+        commits_time8=$(date +"%Y-%m-%d %H:%M:%S" -d "@$(($(date +%s -d "$commits_time")+28800))")
+        echo $(date +"%Y-%m-%d %H:%M:%S")  $(date +%s)
+        echo $commits_time  $(date +%s -d "$commits_time")
+        echo $(($(date +%s) - $(date +%s -d "$commits_time")))
+        if [ $(($(date +%s) - $(date +%s -d "$commits_time"))) -le 86400 ] || [ $(($(date +%s) - $(date +%s -d "$commits_time2"))) -le 86400 ]; then
+          echo "CODE_TIME=$commits_time" >> $GITHUB_ENV
+          echo "CODE_TIME8=$commits_time8" >> $GITHUB_ENV
+          echo "status=success" >> $GITHUB_OUTPUT
+        else
+          echo "No Update"
+        fi
+
     - name: 检查项目分支
+      if: steps.checknew.outputs.status == 'success' && !cancelled()
       uses: actions/checkout@main
       with:
         fetch-depth: 0
 
     - name: 安装编译环境
+      if: steps.checknew.outputs.status == 'success' && !cancelled()
       env:
         DEBIAN_FRONTEND: noninteractive
       run: |
         sudo rm -rf /etc/apt/sources.list.d/* /usr/share/dotnet /usr/local/lib/android /opt/ghc
-        sudo -E apt-get -qq update
+        sudo -E apt update -y
+        sudo -E apt full-upgrade -y
         sudo apt install -y ack antlr3 asciidoc autoconf automake autopoint binutils bison build-essential \
         bzip2 ccache cmake cpio curl device-tree-compiler fastjar flex gawk gettext gcc-multilib g++-multilib \
         git gperf haveged help2man intltool libc6-dev-i386 libelf-dev libglib2.0-dev libgmp3-dev libltdl-dev \
@@ -51,18 +73,21 @@ jobs:
         vim wget xmlto xxd zlib1g-dev python3-setuptools
         sudo -E apt-get -qq autoremove --purge
         sudo -E apt-get -qq clean
-        sudo timedatectl set-timezone "$TZ"
+        sudo timedatectl set-timezone "Asia/Shanghai"
         sudo mkdir -p /workdir
         sudo chown $USER:$GROUPS /workdir
 
     - name: 下载固件源码
+      id: download
+      if: steps.checknew.outputs.status == 'success' && !cancelled()
       working-directory: /workdir
       run: |
         df -hT $PWD
-        git clone $REPO_URL -b $REPO_BRANCH openwrt
+        git clone $GITHUB_URL/$REPO_URL -b $REPO_BRANCH openwrt
         ln -sf /workdir/openwrt $GITHUB_WORKSPACE/openwrt
+        echo "status=success" >> $GITHUB_OUTPUT
 
-    - name: Cache
+    - name: 缓存Cache
       uses: actions/cache@v1.2.1
       with:
         path: ${{ github.workspace }}/openwrt
@@ -70,12 +95,15 @@ jobs:
         restore-keys: openwrt-test
 
     - name: 加载自定义插件库
+      id: plugin
+      if: steps.download.outputs.status == 'success' && !cancelled()
       run: |
         [ -e $FEEDS_CONF ] && mv $FEEDS_CONF openwrt/feeds.conf.default
         chmod +x $DIY_P1_SH
         cd openwrt
         $GITHUB_WORKSPACE/$DIY_P1_SH
-
+        echo "status=success" >> $GITHUB_OUTPUT
+        
     - name: 下载插件
       run: cd openwrt && ./scripts/feeds update -a
 
@@ -83,12 +111,15 @@ jobs:
       run: cd openwrt && ./scripts/feeds install -a
 
     - name: 加载自定义设置
+      id: config
+      if: steps.plugin.outputs.status == 'success' && !cancelled()
       run: |
         [ -e files ] && mv files openwrt/files
         [ -e $CONFIG_FILE ] && mv $CONFIG_FILE openwrt/.config
         chmod +x $DIY_P2_SH
         cd openwrt
         $GITHUB_WORKSPACE/$DIY_P2_SH
+        echo "status=success" >> $GITHUB_OUTPUT
 
     - name: SSH连接管理
       uses: P3TERX/ssh2actions@v1.0.0
@@ -99,39 +130,42 @@ jobs:
 
     - name: 下载插件包
       id: package
+      if: steps.config.outputs.status == 'success' && !cancelled()
       run: |
         cd openwrt
         make defconfig
         make download -j8
         find dl -size -1024c -exec ls -l {} \;
         find dl -size -1024c -exec rm -f {} \;
-        
+        echo "status=success" >> $GITHUB_OUTPUT
+
     - name: 编译固件
       id: compile
+      if: steps.package.outputs.status == 'success' && !cancelled()
       run: |
         cd openwrt
         echo -e "$(nproc) thread compile"
         make -j$(nproc) || make -j1 || make -j1 V=s
         grep '^CONFIG_TARGET.*DEVICE.*=y' .config | sed -r 's/.*DEVICE_(.*)=y/\1/' > DEVICE_NAME
-        [ -s DEVICE_NAME ] && echo "DEVICE_NAME=_$(cat DEVICE_NAME)" >> $GITHUB_ENV
-        echo "FILE_DATE=_$(date +"%Y%m%d%H%M")" >> $GITHUB_ENV
-        echo "FILE_TIME=$(date "+%Y年%m月%d日%H时%M分")" >> $GITHUB_ENV
+        [ -s DEVICE_NAME ] && echo "DEVICE_NAME=$(cat DEVICE_NAME)" >> $GITHUB_ENV
+        echo "FILE_DATE=$(date +"%Y%m%d%H%M")" >> $GITHUB_ENV
+        echo "FILE_TIME=$(date +"%Y年%m月%d日%H时%M分")" >> $GITHUB_ENV
         echo "status=success" >> $GITHUB_OUTPUT
-
+        
     - name: 检查磁盘使用情况
       if: (!cancelled())
       run: df -hT
 
     - name: 上传bin目录
       uses: actions/upload-artifact@main
-      if: steps.compile.outputs.status == 'success' && env.UPLOAD_BIN_DIR == 'true'
+      if: steps.compile.outputs.status == 'success' && !cancelled()
       with:
         name: OpenWrt_bin${{ env.DEVICE_NAME }}${{ env.FILE_DATE }}
         path: openwrt/bin
 
     - name: 组织文件
       id: organize
-      if: env.UPLOAD_FIRMWARE == 'true' && !cancelled()
+      if: steps.compile.outputs.status == 'success' && !cancelled()
       run: |
         cd openwrt/bin/targets/*/*
         rm -rf packages
@@ -147,25 +181,25 @@ jobs:
 
     - name: 上传固件到cowtransfer
       id: cowtransfer
-      if: steps.organize.outputs.status == 'success' && env.UPLOAD_COWTRANSFER == 'true' && !cancelled()
+      if: env.UPLOAD_COWTRANSFER == 'true' && steps.organize.outputs.status == 'success' && !cancelled()
       run: |
         curl -fsSL git.io/file-transfer | sh
         ./transfer cow --block 2621440 -s -p 64 --no-progress ${FIRMWARE} 2>&1 | tee cowtransfer.log
         echo "::warning file=cowtransfer.com::$(cat cowtransfer.log | grep https)"
-        echo "::set-output name=url::$(cat cowtransfer.log | grep https | cut -f3 -d" ")"
+        echo "url=$(cat cowtransfer.log | grep https | cut -f3 -d" ")" >> $GITHUB_ENV
 
     - name: 上传固件到WeTransfer
       id: wetransfer
-      if: steps.organize.outputs.status == 'success' && env.UPLOAD_WETRANSFER == 'true' && !cancelled()
+      if: env.UPLOAD_WETRANSFER == 'true' && steps.organize.outputs.status == 'success' && !cancelled()
       run: |
         curl -fsSL git.io/file-transfer | sh
         ./transfer wet -s -p 16 --no-progress ${FIRMWARE} 2>&1 | tee wetransfer.log
         echo "::warning file=wetransfer.com::$(cat wetransfer.log | grep https)"
-        echo "::set-output name=url::$(cat wetransfer.log | grep https | cut -f3 -d" ")"
+        echo "url=$(cat wetransfer.log | grep https | cut -f3 -d" ")" >> $GITHUB_ENV
 
     - name: 生成release标签
       id: tag
-      if: env.UPLOAD_RELEASE == 'true' && !cancelled()
+      if: steps.organize.outputs.status == 'success' && !cancelled()
       run: |
         echo "::set-output name=release_tag::$(date +"%Y.%m.%d-%H%M")"
         touch release.txt
@@ -174,7 +208,7 @@ jobs:
         [ $UPLOAD_WETRANSFER = true ] && echo "🔗 [WeTransfer网盘](${{ steps.wetransfer.outputs.url }})" >> release.txt
         echo "status=success" >> $GITHUB_OUTPUT
 
-    - name: 上传固件到release
+    - name: 上传到release
       uses: softprops/action-gh-release@v1
       if: steps.tag.outputs.status == 'success' && !cancelled()
       env:
@@ -190,7 +224,7 @@ jobs:
       with:
         delete_releases: true
         delete_tags: true
-        releases_keep_latest: 30
+        releases_keep_latest: 100
         delete_workflows: true
         workflows_keep_day: 30
         gh_token: ${{ secrets.GH_TOKEN }}
