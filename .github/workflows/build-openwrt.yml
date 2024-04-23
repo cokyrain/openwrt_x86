@@ -55,6 +55,7 @@ jobs:
       uses: actions/checkout@main
 
     - name: 安装编译环境
+      id: env
       if: steps.checknew.outputs.status == 'success' && !cancelled()
       env:
         DEBIAN_FRONTEND: noninteractive
@@ -74,10 +75,11 @@ jobs:
         sudo timedatectl set-timezone "Asia/Shanghai"
         sudo mkdir -p /workdir
         sudo chown $USER:$GROUPS /workdir
+        echo "status=success" >> $GITHUB_OUTPUT
 
     - name: 下载固件源码
       id: download
-      if: steps.checknew.outputs.status == 'success' && !cancelled()
+      if: steps.env.outputs.status == 'success' && !cancelled()
       working-directory: /workdir
       run: |
         df -hT $PWD
