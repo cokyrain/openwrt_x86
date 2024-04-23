@@ -213,7 +213,7 @@ jobs:
       with:
         delete_releases: true
         delete_tags: true
-        releases_keep_latest: 300
+        releases_keep_latest: 100
         delete_workflows: true
-        workflows_keep_day: 365
+        workflows_keep_day: 30
         gh_token: ${{ secrets.GH_TOKEN }}
