@@ -49,7 +49,7 @@ jobs:
           echo "status=success" >> $GITHUB_OUTPUT
         else
           echo "No Update"
-		  echo "status=false" >> $GITHUB_OUTPUT
+          echo "status=false" >> $GITHUB_OUTPUT
         fi
 
     - name: Checkout
