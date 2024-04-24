@@ -42,7 +42,7 @@ jobs:
         echo $(date +"%Y-%m-%d %H:%M:%S")  $(date +%s)
         echo $commits_time  $(date +%s -d "$commits_time")
         echo $(($(date +%s) - $(date +%s -d "$commits_time")))
-        if [ $(($(date +%s) - $(date +%s -d "$commits_time"))) -le 86400 ] || [ $(($(date +%s) - $(date +%s -d "$commits_time2"))) -le 86400 ]; then
+        if [ $(($(date +%s) - $(date +%s -d "$commits_time"))) -le 186400 ] || [ $(($(date +%s) - $(date +%s -d "$commits_time2"))) -le 86400 ]; then
           echo "CODE_TIME=$commits_time" >> $GITHUB_ENV
           echo "CODE_TIME8=$commits_time8" >> $GITHUB_ENV
           echo "status=success" >> $GITHUB_OUTPUT
@@ -50,16 +50,14 @@ jobs:
           echo "No Update"
         fi
 
-    - name: 检查磁盘使用情况
-      if: (!cancelled())
-      run: df -hT
-
     - name: 检查项目分支
       if: steps.checknew.outputs.status == 'success' && !cancelled()
       uses: actions/checkout@main
+      with:
+        fetch-depth: 0
 
     - name: 安装编译环境
-      id: env
+      id: envs
       if: steps.checknew.outputs.status == 'success' && !cancelled()
       env:
         DEBIAN_FRONTEND: noninteractive
@@ -81,19 +79,22 @@ jobs:
         sudo chown $USER:$GROUPS /workdir
         echo "status=success" >> $GITHUB_OUTPUT
 
-    - name: 检查磁盘使用情况
-      if: (!cancelled())
-      run: df -hT
-
     - name: 下载固件源码
       id: download
-      if: steps.env.outputs.status == 'success' && !cancelled()
+      if: steps.envs.outputs.status == 'success' && !cancelled()
       working-directory: /workdir
       run: |
         df -hT $PWD
         git clone $GITHUB_URL/$REPO_URL -b $REPO_BRANCH openwrt
         ln -sf /workdir/openwrt $GITHUB_WORKSPACE/openwrt
         echo "status=success" >> $GITHUB_OUTPUT
+
+    - name: 缓存Cache
+      uses: actions/cache@v4
+      with:
+        path: ${{ github.workspace }}/openwrt
+        key: openwrt
+        restore-keys: openwrt
 
     - name: 加载自定义插件库
       id: plugin
@@ -131,10 +132,6 @@ jobs:
         TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
 
-    - name: 检查磁盘使用情况
-      if: (!cancelled())
-      run: df -hT
-
     - name: 下载插件包
       id: package
       if: steps.config.outputs.status == 'success' && !cancelled()
@@ -145,10 +142,6 @@ jobs:
         find dl -size -1024c -exec ls -l {} \;
         find dl -size -1024c -exec rm -f {} \;
         echo "status=success" >> $GITHUB_OUTPUT
-
-    - name: 检查磁盘使用情况
-      if: (!cancelled())
-      run: df -hT
 
     - name: 编译固件
       id: compile
@@ -212,7 +205,7 @@ jobs:
       id: tag
       if: steps.organize.outputs.status == 'success' && !cancelled()
       run: |
-        echo "::set-output name=release_tag::$(date +"%Y.%m.%d-%H%M")"
+        echo "release_tag=$(date +"%Y.%m.%d-%H%M")" >> $GITHUB_OUTPUT
         touch release.txt
         echo "[固件源码](https://github.com/coolsnowwolf/lede)" >> release.txt
         [ $UPLOAD_COWTRANSFER = true ] && echo "🔗 [Cowtransfer网盘](${{ steps.cowtransfer.outputs.url }})" >> release.txt
