@@ -50,6 +50,10 @@ jobs:
           echo "No Update"
         fi
 
+    - name: 检查磁盘使用情况
+      if: (!cancelled())
+      run: df -hT
+
     - name: 检查项目分支
       if: steps.checknew.outputs.status == 'success' && !cancelled()
       uses: actions/checkout@main
@@ -77,6 +81,10 @@ jobs:
         sudo chown $USER:$GROUPS /workdir
         echo "status=success" >> $GITHUB_OUTPUT
 
+    - name: 检查磁盘使用情况
+      if: (!cancelled())
+      run: df -hT
+
     - name: 下载固件源码
       id: download
       if: steps.env.outputs.status == 'success' && !cancelled()
@@ -98,9 +106,11 @@ jobs:
         echo "status=success" >> $GITHUB_OUTPUT
         
     - name: 下载插件
+      if: steps.plugin.outputs.status == 'success' && !cancelled()
       run: cd openwrt && ./scripts/feeds update -a
 
     - name: 安装插件
+      if: steps.plugin.outputs.status == 'success' && !cancelled()
       run: cd openwrt && ./scripts/feeds install -a
 
     - name: 加载自定义设置
@@ -121,6 +131,10 @@ jobs:
         TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
 
+    - name: 检查磁盘使用情况
+      if: (!cancelled())
+      run: df -hT
+
     - name: 下载插件包
       id: package
       if: steps.config.outputs.status == 'success' && !cancelled()
@@ -131,6 +145,10 @@ jobs:
         find dl -size -1024c -exec ls -l {} \;
         find dl -size -1024c -exec rm -f {} \;
         echo "status=success" >> $GITHUB_OUTPUT
+
+    - name: 检查磁盘使用情况
+      if: (!cancelled())
+      run: df -hT
 
     - name: 编译固件
       id: compile
