@@ -1,5 +1,4 @@
 # Description: Build OpenWrt using GitHub Actions https://github.com/P3TERX/Actions-OpenWrt
-
 name: OpenWrt Builder
 
 on:
