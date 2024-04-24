@@ -105,9 +105,11 @@ jobs:
         echo "status=success" >> $GITHUB_OUTPUT
         
     - name: 下载插件
+      if: steps.plugin.outputs.status == 'success' && !cancelled()
       run: cd openwrt && ./scripts/feeds update -a
 
     - name: 安装插件
+      if: steps.plugin.outputs.status == 'success' && !cancelled()
       run: cd openwrt && ./scripts/feeds install -a
 
     - name: 加载自定义设置
