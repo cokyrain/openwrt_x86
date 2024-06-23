@@ -1,5 +1,5 @@
 # Description: Build OpenWrt using GitHub Actions https://github.com/P3TERX/Actions-OpenWrt
-name: Build TestOpenWrt
+name: Build Test OpenWrt
 
 on:
   repository_dispatch:
@@ -62,7 +62,8 @@ jobs:
       env:
         DEBIAN_FRONTEND: noninteractive
       run: |
-        sudo rm -rf /etc/apt/sources.list.d/* /usr/share/dotnet /usr/local/lib/android /opt/ghc
+        sudo rm -rf /etc/apt/sources.list.d/* /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL
+        sudo docker image prune --all --force
         sudo -E apt update -y
         sudo -E apt full-upgrade -y
         sudo apt install -y ack antlr3 asciidoc autoconf automake autopoint binutils bison build-essential \
