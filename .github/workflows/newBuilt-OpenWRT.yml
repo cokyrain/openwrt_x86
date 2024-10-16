@@ -65,7 +65,7 @@ jobs:
         uname -a
         lsb_release -a
         cat /etc/apt/sources.list.d/ubuntu.sources
-        cat /etc/apt/sources.list
+        #cat /etc/apt/sources.list
         
     
     - name: 安装编译环境
