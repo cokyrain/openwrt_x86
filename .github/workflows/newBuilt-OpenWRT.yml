@@ -115,6 +115,7 @@ jobs:
  
     - name: Free Disk Space
       uses: endersonmenezes/free-disk-space@main
+      if: steps.checknew.outputs.status == '111' && !cancelled()
       with:
         remove_android: true
         remove_dotnet: true
