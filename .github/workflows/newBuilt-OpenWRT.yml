@@ -71,19 +71,16 @@ jobs:
         
     - name: Free Disk Space (Ubuntu)
       uses: jlumbroso/free-disk-space@main
+      if: steps.checknew.outputs.status == '111' && !cancelled()
       with:
-    # this might remove tools that are actually needed,
-    # if set to "true" but frees about 6 GB
         tool-cache: true
-    # all of these default to true, but feel free to set to
-    # "false" if necessary for your workflow
         android: true
         dotnet: true
         haskell: true
         large-packages: true
         swap-storage: true
         
-    - name: disk space 1
+    - name: disk space 2
       run: |
         echo "=============================================================================="
         df -hT
@@ -110,7 +107,7 @@ jobs:
         npm_clean: "True"
         os_swap: "True"
 
-    - name: disk space 1
+    - name: disk space 3
       run: |
         echo "=============================================================================="
         df -hT
@@ -127,7 +124,7 @@ jobs:
         remove-codeql: 'true'
         remove-docker-images: 'true'
 
-    - name: disk space 1
+    - name: disk space 4
       run: |
         echo "=============================================================================="
         df -hT
@@ -145,7 +142,13 @@ jobs:
         remove_packages_one_command: true
         remove_folders: "/etc/apt/sources.list.d* /etc/mono* /etc/mysql* /usr/include/linux/android* /usr/lib/llvm* /usr/lib/mono* /usr/local/lib/android* /usr/local/lib/node_modules* /usr/local/share/chromium* /usr/local/share/powershell* /usr/local/share/vcpkg/ports/azure* /usr/local/share/vcpkg/ports/google* /usr/local/share/vcpkg/ports/libpq/android* /usr/local/share/vcpkg/ports/llvm* /usr/local/share/vcpkg/ports/mysql* /usr/local/share/vcpkg/ports/snap* /usr/share/azure* /usr/share/dotnet* /usr/share/glade* /usr/share/miniconda* /usr/share/php* /usr/share/swift /var/lib/mysql* /var/log/azure*"
         testing: false
-    
+
+    - name: disk space 5
+      run: |
+        echo "=============================================================================="
+        df -hT
+        echo "=============================================================================="
+
     - name: Checkout
       uses: actions/checkout@main
 
