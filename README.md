@@ -33,3 +33,5 @@ Build OpenWrt using GitHub Actions
 - [softprops/action-gh-release](https://github.com/softprops/action-gh-release)
 - [c-hive/gha-remove-artifacts](https://github.com/c-hive/gha-remove-artifacts)
 - [dev-drprasad/delete-older-releases](https://github.com/dev-drprasad/delete-older-releases)
+
+Alpine: apk add git perl make bash python3 rsync tar patch grep gzip unzip bzip2 wget file gcc g++ ncurses-dev gawk py3-setuptools findutils argp-standalone diffutils musl-fts-dev musl-obstack-dev musl-libintl
