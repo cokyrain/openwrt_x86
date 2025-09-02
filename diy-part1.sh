@@ -20,4 +20,9 @@
 #sed -i '$a src-git jerryk https://github.com/jerrykuku/openwrt-package' feeds.conf.default
 #echo 'src-git helloworld https://github.com/fw876/helloworld.git;main' >>feeds.conf.default
 echo 'src-git helloworld https://github.com/fw876/helloworld.git' >> feeds.conf.default
-#echo 'src-git passwall https://github.com/xiaorouji/openwrt-passwall' >>feeds.conf.default
+echo 'src-git passwall2 https://github.com/xiaorouji/openwrt-passwall2.git' >>feeds.conf.default
+
+# 注释掉 23.x luci 行
+sed -i 's/^\(src-git luci .*;23\..*\)/#\1/' feeds.conf.default
+# 取消注释 24.x luci 行
+sed -i 's/^#\(src-git luci .*;24\..*\)/\1/' feeds.conf.default
