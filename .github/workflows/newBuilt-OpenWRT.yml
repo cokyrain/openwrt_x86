@@ -35,6 +35,10 @@ jobs:
     - name: 检查库更新情况
       id: checknew
       run: |
+        if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+          echo "status=success" >> $GITHUB_OUTPUT
+          exit 0
+        fi
         curl https://api.github.com/repos/$REPO_URL/commits > index.json
         curl https://api.github.com/repos/fw876/helloworld/commits > index2.json
         commits_time1=$(cat index.json | grep "date" | sed -n "2p" | sed 's/        \"date\": \"//g' | sed 's/\"//g' | sed 's/T/ /g' | sed 's/Z//g')
