@@ -67,7 +67,7 @@ jobs:
         #uname -a
         lsb_release -a
 
-    - name: disk space 1
+    - name: 清理前磁盘大小
       if: steps.checknew.outputs.status == 'success' && !cancelled()
       run: |
         echo "=============================================================================="
@@ -111,7 +111,7 @@ jobs:
         large-packages: true
         swap-storage: true
         
-    - name: Optimize Disk Space
+    - name: 清理磁盘空间
       uses: hugoalh/disk-space-optimizer-ghaction@v0.8.1
       if: steps.checknew.outputs.status == 'success' && !cancelled()
       with:
@@ -133,7 +133,7 @@ jobs:
         npm_clean: "True"
         os_swap: "True"
 
-    - name: disk space 2
+    - name: 清理后磁盘大小
       if: steps.checknew.outputs.status == 'success' && !cancelled()
       run: |
         echo "=============================================================================="
@@ -152,13 +152,13 @@ jobs:
         sudo docker image prune --all --force
         sudo apt-get update -y -qq
         sudo apt-get full-upgrade -y -qq
-        sudo apt-get install -y -qq ack antlr3 asciidoc autoconf automake autopoint binutils bison build-essential \
-        bzip2 ccache cmake cpio curl device-tree-compiler fastjar flex gawk gettext gcc-multilib g++-multilib \
-        git gperf haveged help2man intltool libc6-dev-i386 libelf-dev libfuse-dev libglib2.0-dev libgmp3-dev \
-        libltdl-dev libmpc-dev libmpfr-dev libncurses5-dev libncursesw5-dev libpython3-dev libreadline-dev \
-        libssl-dev libtool lrzsz mkisofs msmtp ninja-build p7zip p7zip-full patch pkgconf python3 \
-        python3-pyelftools python3-setuptools qemu-utils rsync scons squashfs-tools subversion swig texinfo \
-        uglifyjs upx-ucl unzip vim wget xmlto xxd zlib1g-dev
+        sudo apt install -y ack antlr3 asciidoc autoconf automake autopoint binutils bison build-essential \
+        bzip2 ccache clang cmake cpio curl device-tree-compiler flex gawk gcc-multilib g++-multilib gettext \
+        genisoimage git gperf haveged help2man intltool libc6-dev-i386 libelf-dev libfuse-dev libglib2.0-dev \
+        libgmp3-dev libltdl-dev libmpc-dev libmpfr-dev libncurses5-dev libncursesw5-dev libpython3-dev \
+        libreadline-dev libssl-dev libtool llvm lrzsz msmtp ninja-build p7zip p7zip-full patch pkgconf \
+        python3 python3-pyelftools python3-setuptools qemu-utils rsync scons squashfs-tools subversion \
+        swig texinfo uglifyjs upx-ucl unzip vim wget xmlto xxd zlib1g-dev
         sudo apt-get autoremove --purge -y -qq
         sudo apt-get clean -y -qq
         sudo timedatectl set-timezone "$TZ"
