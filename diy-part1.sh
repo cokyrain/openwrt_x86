@@ -25,6 +25,6 @@ echo 'src-git passwall_luci https://github.com/xiaorouji/openwrt-passwall.git' >
 echo 'src-git passwall2 https://github.com/xiaorouji/openwrt-passwall2.git' >>feeds.conf.default
 
 # 注释掉 23.x luci 行
-#sed -i 's/^\(src-git luci .*;23\..*\)/#\1/' feeds.conf.default
+sed -i 's/^\(src-git luci .*\(23\.[^;]*\)\)/#\1/' feeds.conf.default
 # 取消注释 24.x luci 行
-#sed -i 's/^#\(src-git luci .*;24\..*\)/\1/' feeds.conf.default
+sed -i 's/^#\(src-git luci .*\(24\.[^;]*\)\)/\1/' feeds.conf.default
