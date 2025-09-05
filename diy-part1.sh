@@ -20,8 +20,8 @@
 #echo 'src-git passwall_luci https://github.com/xiaorouji/openwrt-passwall' >>feeds.conf.default
 #echo 'src-git passwall2_luci https://github.com/xiaorouji/openwrt-passwall2' >>feeds.conf.default
 sed -i '1i\
-src-git passwall_packages https://github.com/xiaorouji/openwrt-passwall-packages\n\
-src-git passwall_luci https://github.com/xiaorouji/openwrt-passwall\n\
+src-git passwall_packages https://github.com/xiaorouji/openwrt-passwall-packages\
+src-git passwall_luci https://github.com/xiaorouji/openwrt-passwall\
 src-git passwall2_luci https://github.com/xiaorouji/openwrt-passwall2' feeds.conf.default
 
 
