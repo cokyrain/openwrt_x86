@@ -31,4 +31,4 @@ sed -i 's/^\(src-git luci .*\(23\.[^;]*\)\)/#\1/' feeds.conf.default
 sed -i 's/^#\(src-git luci .*\(24\.[^;]*\)\)/\1/' feeds.conf.default
 
 #增加github代理
-#sed -i 's|https://github.com|https://gh-proxy.com/https://github.com|g' feeds.conf.default
+#sed -i 's| \(https://github.com\)| https://gh-proxy.com/\1|g' feeds.conf.default
