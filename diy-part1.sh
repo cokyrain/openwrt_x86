@@ -1,10 +1,4 @@
 #!/bin/bash
-#
-# Copyright (c) 2019-2020 P3TERX <https://p3terx.com>
-#
-# This is free software, licensed under the MIT License.
-# See /LICENSE for more information.
-#
 # https://github.com/P3TERX/Actions-OpenWrt
 # File name: diy-part1.sh
 # Description: OpenWrt DIY script part 1 (Before Update feeds)
@@ -35,3 +29,6 @@ src-git passwall2_luci https://github.com/xiaorouji/openwrt-passwall2' feeds.con
 sed -i 's/^\(src-git luci .*\(23\.[^;]*\)\)/#\1/' feeds.conf.default
 # 取消注释 24.x luci 行
 sed -i 's/^#\(src-git luci .*\(24\.[^;]*\)\)/\1/' feeds.conf.default
+
+#增加github代理
+#sed -i 's|https://github.com|https://gh-proxy.com/https://github.com|g' feeds.conf.default
