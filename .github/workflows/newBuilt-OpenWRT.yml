@@ -293,7 +293,7 @@ jobs:
         echo "status=success" >> $GITHUB_OUTPUT
 
     - name: 发布到release
-      uses: softprops/action-gh-release@v2
+      uses: softprops/action-gh-release@v3
       if: steps.tag.outputs.status == 'success' && !cancelled()
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -304,6 +304,7 @@ jobs:
         files: ${{ env.FIRMWARE }}/*
 
     - name: Delete releases and workflows runs
+      if: env.UPLOAD_RELEASE == 'true' && !cancelled()
       uses: ophub/delete-releases-workflows@main
       with:
         delete_releases: true
@@ -314,16 +315,8 @@ jobs:
         gh_token: ${{ secrets.GH_TOKEN }}
 
     - name: Delete workflow runs
+      if: env.UPLOAD_RELEASE == 'true' && !cancelled()
       uses: Mattraks/delete-workflow-runs@main
       with:
         retain_days: 30
         keep_minimum_runs: 2
-
-    - name: Remove old Releases
-      uses: dev-drprasad/delete-older-releases@master
-      if: env.UPLOAD_RELEASE == 'true' && !cancelled()
-      with:
-        keep_latest: 100
-        delete_tags: true
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
